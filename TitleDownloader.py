@@ -37,7 +37,7 @@ class Downloader():
 				except Exception as e :
 					print ''.join ( [ url, '  ', str( e )  ] )
 			#With block python calls file.close() automatically.		
-			file.close()	
+				
 
 	def createurl ( self ) :
 
