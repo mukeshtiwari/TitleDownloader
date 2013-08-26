@@ -17,15 +17,16 @@ class Downloader():
 					url = self.q.get( )
 					data = urllib2.urlopen ( url , data = None , timeout = 10 )
 					regex = re.compile('<title.*>(.*?)</title>' , re.IGNORECASE)
-					#Read data line by line and as soon you find the title go out of loop. for title in data. 
-					#for r in data:
-						#if not r :
-						#	raise StopIteration
-						#else: 
-						#	t = regex.search( r )
-						#	if t is not None: break
+					#Read data line by line and as soon you find the title go out of loop. 
+					title = None
+					for r in data:
+						if not r :
+							raise StopIteration
+						else: 
+							title = regex.search( r )
+							if title is not None: break
 
-					title = regex.search( data.read() )
+					#title = regex.search( data.read() )
 					result =  ', '.join ( [ url , title.group(1) ] )
 					data.close()
 					file.write(''.join( [ result , '\n' ] ) )
