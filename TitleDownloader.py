@@ -15,20 +15,20 @@ class Downloader():
 			while True :
 				try :
 					url = self.q.get( )
-					data = urllib2.urlopen ( url , data = None , timeout = 10 )
+					data = urllib2.urlopen ( url , data = None , timeout = 10 ).read( 30000 )
 					regex = re.compile('<title.*>(.*?)</title>' , re.IGNORECASE)
 					#Read data line by line and as soon you find the title go out of loop. 
-					title = None
-					for r in data:
-						if not r :
-							raise StopIteration
-						else: 
-							title = regex.search( r )
-							if title is not None: break
+					#title = None
+					#for r in data:
+					#	if not r :
+					#		raise StopIteration
+					#	else: 
+					#		title = regex.search( r )
+					#		if title is not None: break
 
-					#title = regex.search( data.read() )
+					title = regex.search( data )
 					result =  ', '.join ( [ url , title.group(1) ] )
-					data.close()
+					#data.close()
 					file.write(''.join( [ result , '\n' ] ) )
 				except urllib2.HTTPError as e:
 				       print ''.join ( [ url, '  ', str ( e ) ] ) 
@@ -36,6 +36,7 @@ class Downloader():
 					print ''.join ( [ url, '  ', str ( e ) ] )
 				except Exception as e :
 					print ''.join ( [ url, '  ', str( e )  ] )
+			#With block python calls file.close() automatically.		
 			file.close()	
 
 	def createurl ( self ) :
