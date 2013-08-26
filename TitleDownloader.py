@@ -1,47 +1,60 @@
-import urllib2, socket, Queue, thread, signal, sys, re
+import urllib2, os, socket, Queue, thread, signal, sys, re
+
 
 class Downloader():
 
 	def __init__( self ):
-		self.q = Queue.Queue( 100 )
-		self.count = 0
-		socket.setdefaulttimeout( 10 )
+		self.q = Queue.Queue( 200 )
+		self.count = 0 
+	
+
 
 	def downloadurl( self ) :
-		#open a file and write the result ( write in chunks ) 
+		#open a file in append mode and write the result ( Improvement think of writing in chunks ) 
 		with open('titleoutput.dat', 'a+' ) as file :	
 			while True :
 				try :
 					url = self.q.get( )
-					data = urllib2.urlopen ( url )
+					data = urllib2.urlopen ( url , data = None , timeout = 10 )
 					regex = re.compile('<title.*>(.*?)</title>' , re.IGNORECASE)
-					title = regex.search(data.read())
+					#Read data line by line and as soon you find the title go out of loop. for title in data. 
+					#for r in data:
+						#if not r :
+						#	raise StopIteration
+						#else: 
+						#	t = regex.search( r )
+						#	if t is not None: break
+
+					title = regex.search( data.read() )
 					result =  ', '.join ( [ url , title.group(1) ] )
 					data.close()
 					file.write(''.join( [ result , '\n' ] ) )
-				except urllib2.URLError, e :
-					print ''.join ( [ url, '  ', str ( e.code ) ] )
-					#print e.read()
-				except socket.error:
-					print ''.join ( [ url, '  ', 'Could not open socket' ] )
-				except :
-					print ''.join ( [ url, '  ', 'Something wrong' ] )
-				
+				except urllib2.HTTPError as e:
+				       print ''.join ( [ url, '  ', str ( e ) ] ) 
+				except urllib2.URLError as e:
+					print ''.join ( [ url, '  ', str ( e ) ] )
+				except Exception as e :
+					print ''.join ( [ url, '  ', str( e )  ] )
+			file.close()	
 
 	def createurl ( self ) :
 
-		#read the number from file. The purpose here to open in read mode is if there is no file then create one
-		with open('bytesread.dat','w') as file:
-			try :
-				self.count = int ( file.readline() )
-			except :
-				self.count = 0 
-			file.close()
+		#check if file exist. If not then create one with default value of 0 bytes read.
+		if os.path.exists('bytesread.dat'):
+			f = open ( 'bytesread.dat','r')
+			self.count = int ( f.readline() )
+					           
+		else:
+			f=open('bytesread.dat','w')
+			f.write('0\n')
+			f.close()
 
-		#Reading data in chunks is fast but we can miss some sites due to reading the data in chunks( It's worth missing because reading is very fast
+		#Reading data in chunks is fast but we can miss some sites due to reading the data in chunks( It's worth missing because reading is very fast)
 		with open('top-1m.csv', 'r') as file:
 			prefix = ''
-			file.seek( self.count * 1024 )
+			file.seek(  self.count * 1024 )
+			#you will land into the middle of bytes so discard upto newline
+			if ( self.count ): file.readline()	
 			for lines in iter ( lambda : file.read( 1024 ) , ''):
 				l = lines.split('\n')
 				n = len ( l )
@@ -50,11 +63,13 @@ class Downloader():
 				prefix = l[n-1]
 				self.count += 1
 
+			
+	#do graceful exit from here.
 	def handleexception ( self , signal , frame) :
 		with open('bytesread.dat', 'w') as file:
 			print ''.join ( [ 'Number of bytes read ( probably unfinished ) ' , str ( self.count ) ] )
 			file.write ( ''.join ( [ str ( self.count ) , '\n' ] ) )
-			file.close()
+			file.close()			
 			sys.exit(0)
 
 if __name__== '__main__':
