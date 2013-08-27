@@ -75,11 +75,13 @@ class Downloader():
 			sys.exit(0)
 
 if __name__== '__main__':
+
 	u = Downloader()
 	signal.signal( signal.SIGINT , u.handleexception)
 	thread.start_new_thread ( u.createurl , () )
 	for i in xrange ( 5 ) :
 		thread.start_new_thread ( u.downloadurl , () )
-	while True : pass
+	#This is for blocking main
+	raw_input('')
 			
 
